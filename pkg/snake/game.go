@@ -1,7 +1,6 @@
 package snake
 
 import (
-	"fmt"
 	"image"
 	"image/color"
 	"math/rand"
@@ -16,6 +15,7 @@ type game struct {
 	size          image.Point
 	snake         []image.Point
 	food          image.Point
+	problem       image.Point
 	lastDirection Direction
 	lost          bool
 }
@@ -25,22 +25,30 @@ var (
 	colorSnake     = color.RGBA{R: 0, G: 255, B: 0, A: 255}
 	colorSnakeHead = color.RGBA{R: 0, G: 128, B: 0, A: 255}
 	colorFood      = color.RGBA{R: 255, G: 0, B: 0, A: 255}
+	colorProblem   = color.RGBA{R: 0, G: 0, B: 255, A: 255}
 )
 
 func (g *game) ToImage() image.Image {
-	img := image.NewRGBA(image.Rectangle{
+	src := image.NewRGBA(image.Rectangle{
 		Min: image.Point{},
-		Max: g.size,
+		Max: g.size.Add(image.Pt(2, 2)),
 	})
-	draw.Draw(img, img.Bounds(), &image.Uniform{C: colorBG}, image.Point{}, draw.Src)
+	draw.Draw(src, image.Rectangle{Min: image.Pt(1, 1), Max: g.size.Add(image.Pt(1, 1))}, &image.Uniform{C: colorBG}, image.Point{}, draw.Src)
+	if g.rnd == nil {
+		return src // game not running
+	}
 	for _, s := range g.snake {
 		// fmt.Println("S", s.X, s.Y)
-		img.Set(s.X, s.Y, colorSnake)
+		src.Set(s.X+1, s.Y+1, colorSnake)
 	}
-	img.Set(g.snake[0].X, g.snake[0].Y, colorSnakeHead)
+	src.Set(g.snake[0].X+1, g.snake[0].Y+1, colorSnakeHead)
 	// fmt.Println("F", g.food.X, g.food.Y)
-	img.Set(g.food.X, g.food.Y, colorFood)
-	return img
+	src.Set(g.food.X+1, g.food.Y+1, colorFood)
+	src.Set(g.problem.X+1, g.problem.Y+1, colorProblem)
+	// resize.Re
+	dst := image.NewRGBA(image.Rect(0, 0, src.Bounds().Max.X*10, src.Bounds().Max.Y*10))
+	draw.NearestNeighbor.Scale(dst, dst.Rect, src, src.Bounds(), draw.Over, nil)
+	return dst
 }
 
 func NewGame(size image.Point, seed int64) Game {
@@ -52,10 +60,28 @@ func NewGame(size image.Point, seed int64) Game {
 		size:          size,
 		rnd:           rand.New(rand.NewSource(seed)),
 		lastDirection: DirSouth,
+		problem:       image.Pt(-100, -100),
 	}
 	g.placeFood()
 	return g
 }
+
+func (g *game) At(x, y int) float64 {
+	head := g.snake[0]
+	if head.X == x && head.Y == y {
+		return 0.5
+	}
+	if g.food.X == x && g.food.Y == y {
+		return 1
+	}
+	for _, p := range g.snake {
+		if p.X == x && p.Y == y {
+			return 0
+		}
+	}
+	return -1
+}
+
 func (g *game) Step(dir Direction) error {
 	if g.lost {
 		return ErrLost
@@ -73,11 +99,13 @@ func (g *game) Step(dir Direction) error {
 		try.X += 1
 	}
 	if !try.In(image.Rectangle{Max: g.size}) {
+		g.problem = try
 		g.lost = true
 		return ErrLost // hit wall
 	}
 	for _, s := range g.snake {
 		if try.Eq(s) {
+			g.problem = try
 			g.lost = true
 			return ErrLost // hit self
 		}
@@ -100,6 +128,14 @@ func (g *game) GetHead() image.Point {
 	return g.snake[0]
 }
 
+func (g *game) GetNeck() image.Point {
+	return g.snake[1]
+}
+
+func (g *game) GetTail() image.Point {
+	return g.snake[len(g.snake)-1]
+}
+
 func (g *game) GetLength() int {
 	return len(g.snake)
 }
@@ -120,7 +156,7 @@ outer:
 				continue outer
 			}
 		}
-		fmt.Println("placed food", newFood)
+		// fmt.Println("placed food", newFood)
 		g.food = newFood
 		return
 	}

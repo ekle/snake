@@ -18,9 +18,12 @@ type Game interface {
 	Step(dir Direction) error
 	NextFood() image.Point
 	GetHead() image.Point
+	GetNeck() image.Point
+	GetTail() image.Point
 	GetLength() int
 	GetSnake() []image.Point
 	ToImage() image.Image
+	At(x, y int) float64
 }
 
 var ErrLost = errors.New("lost")

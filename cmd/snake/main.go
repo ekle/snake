@@ -29,7 +29,7 @@ var (
 
 func main() {
 	go func() {
-		w := app.NewWindow(app.Title("SNAKE"))
+		w := app.NewWindow(app.Title("SNAKE User"))
 
 		if err := loop(w); err != nil {
 			log.Fatal(err)

@@ -9,6 +9,10 @@ type Input struct {
 	sourceF func() float64
 }
 
+func NewInput(f func() float64) *Input {
+	return &Input{sourceF: f}
+}
+
 func (n *Input) calc() {
 	n.result = math.Tanh(n.sourceF())
 }

@@ -1,13 +1,15 @@
 package neuron
 
-import "encoding/json"
+import (
+	"encoding/json"
+)
 
-type net struct {
+type Net struct {
 	layers [][]Neuron
 }
 
-func NewNet(input []*Input, layers ...int) (*net, []Neuron) {
-	network := &net{}
+func NewNet(input []*Input, layers ...int) (*Net, []Neuron) {
+	network := &Net{}
 	network.layers = make([][]Neuron, len(layers)+1)
 	network.layers[0] = make([]Neuron, len(input))
 	for k, v := range input {
@@ -22,16 +24,26 @@ func NewNet(input []*Input, layers ...int) (*net, []Neuron) {
 
 	for currentLayer, layer := range network.layers[1:] {
 		for _, n := range layer {
-			n.setParents(network.layers[currentLayer-1])
+			n.setParents(network.layers[currentLayer])
 		}
 	}
-	return network, network.layers[len(layers)+1]
+	return network, network.layers[len(layers)]
 }
 
-func (n *net) Calc() {
-	for _, layer := range n.layers {
-		for _, neuron := range layer {
+func (n *Net) Calc() {
+	for l, layer := range n.layers {
+		for n, neuron := range layer {
 			neuron.calc()
+			_ = l
+			_ = n
+			// fmt.Printf("%d->%d %2f %s\n", l, n, neuron.Read(), neuron.toJsonNeuron())
+		}
+	}
+}
+func (n *Net) Randomize(probability float64) {
+	for _, layer := range n.layers[1:] {
+		for _, neuron := range layer {
+			neuron.(*Inner).randomize(probability)
 		}
 	}
 }
@@ -46,7 +58,7 @@ type JsonNeuron struct {
 	Weights []float64 `json:"weights"`
 }
 
-func (n *net) Save() ([]byte, error) {
+func (n *Net) Save() ([]byte, error) {
 	var jn = JsonNetwork{}
 	for _, layer := range n.layers[1:] {
 		var jl = JsonLayer{}
@@ -58,7 +70,7 @@ func (n *net) Save() ([]byte, error) {
 	return json.Marshal(jn)
 }
 
-func (n *net) Load(in []byte) error {
+func (n *Net) Load(in []byte) error {
 	var jn = JsonNetwork{}
 	if err := json.Unmarshal(in, &jn); err != nil {
 		return err
