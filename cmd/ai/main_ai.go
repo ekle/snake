@@ -152,7 +152,7 @@ func loop(w *app.Window) error {
 					}
 					g := g // local copy
 					err := oneStep(&g)
-					if err != nil || g.game.GetLastActionAge() > (size*5) {
+					if err != nil || g.game.IdleRounds() > (size*5) {
 						games[k].net = nil // reset
 					}
 					fc = append(fc, layout.Flexed(1, func(gtx layout.Context) layout.Dimensions {
@@ -271,7 +271,7 @@ func play(r RunningGame) result {
 var ErrOutOfRounds = errors.New("out of rounds")
 
 func oneStep(r *RunningGame) error {
-	if r.game.GetLastActionAge() > maxIdleRounds {
+	if r.game.IdleRounds() > maxIdleRounds {
 		return ErrOutOfRounds
 	}
 	r.net.Calc()

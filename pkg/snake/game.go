@@ -126,7 +126,7 @@ func (g *game) Step(dir Direction) error {
 	return nil
 }
 
-func (g *game) GetLastActionAge() int {
+func (g *game) IdleRounds() int {
 	return g.rounds - g.lastActionRound
 }
 
