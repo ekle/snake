@@ -67,19 +67,22 @@ func NewGame(size image.Point, seed int64) Game {
 }
 
 func (g *game) At(x, y int) float64 {
+	if g.food.X == x && g.food.Y == y {
+		return 1 // food
+	}
 	head := g.snake[0]
 	if head.X == x && head.Y == y {
-		return 0.5
-	}
-	if g.food.X == x && g.food.Y == y {
-		return 1
+		return -0.5 // head
 	}
 	for _, p := range g.snake {
 		if p.X == x && p.Y == y {
-			return 0
+			return -0.75 // self
 		}
 	}
-	return -1
+	if y < 0 || y < 0 || x >= g.size.X || y >= g.size.Y {
+		return -1 // wall
+	}
+	return 0 // nothing
 }
 
 func (g *game) Step(dir Direction) error {
