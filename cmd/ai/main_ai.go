@@ -25,16 +25,16 @@ import (
 const MaxGames = 2000
 const MaxShow = 25
 const maxRounds = 1000
+const size = 10
+const maxIdleRounds = size * 4 // no matter where we are, that should be enough to reach every point in an optimal way
 
 type RunningGame struct {
 	net    *neuron.Net
 	game   snake.Game
 	out    []neuron.Neuron
-	rounds int
 }
 
 func createNetWithGame() RunningGame {
-	size := 5
 	game := snake.NewGame(image.Pt(size, size), int64(time.Now().UnixNano()))
 	input := []*neuron.Input{
 		// neuron.NewInput(func() float64 { return float64(size) / float64(size) }),                  // size X
@@ -144,7 +144,7 @@ func loop(w *app.Window) error {
 					}
 					g := g // local copy
 					err := oneStep(&g)
-					if err != nil || g.rounds > (g.game.GetLength()*10) {
+					if err != nil || g.game.GetLastActionAge() > (size*5) {
 						games[k].net = nil // reset
 					}
 					fc = append(fc, layout.Flexed(1, func(gtx layout.Context) layout.Dimensions {
@@ -247,7 +247,7 @@ func play(r RunningGame) result {
 		sort--
 	}
 	sort *= 1000
-	sort -= r.rounds
+	sort -= r.game.GetRounds()
 	rawNet, err := r.net.Save()
 	if err != nil {
 		panic("could not save net")
@@ -263,9 +263,7 @@ func play(r RunningGame) result {
 var ErrOutOfRounds = errors.New("out of rounds")
 
 func oneStep(r *RunningGame) error {
-	r.rounds++
-	if r.rounds > maxRounds {
-		// fmt.Print(r.rounds, maxRounds)
+	if r.game.GetLastActionAge() > maxIdleRounds {
 		return ErrOutOfRounds
 	}
 	r.net.Calc()
