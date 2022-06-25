@@ -83,7 +83,6 @@ func createNetWithGame() RunningGame {
 	*/
 
 	net, out := neuron.NewNet(input, len(input)*2, len(input)*2, 4)
-	// net, out := neuron.NewNet(input, 4)
 	return RunningGame{net: net, game: game, out: out}
 }
 
@@ -104,9 +103,6 @@ func main() {
 var refresh = make(chan struct{})
 
 func loop(w *app.Window) error {
-
-	// var btnReset widget.Clickable
-
 	var ops op.Ops
 	var games = make([]RunningGame, MaxShow)
 	for {
@@ -127,9 +123,7 @@ func loop(w *app.Window) error {
 				gtx := layout.NewContext(&ops, e)
 				op.InvalidateOp{At: gtx.Now.Add(time.Millisecond * 100)}.Add(&ops)
 				var fc []layout.FlexChild
-
 				var rows []layout.FlexChild
-
 				for k, g := range games {
 					if g.net == nil {
 						if len(results) < (k + 1) {
@@ -143,9 +137,7 @@ func loop(w *app.Window) error {
 						g = running
 					}
 				}
-
 				perLine := int(math.Sqrt(float64(MaxShow)))
-
 				for k, g := range games {
 					if g.net == nil {
 						continue
@@ -176,18 +168,12 @@ func loop(w *app.Window) error {
 					}))
 					fc = nil
 				}
-
 				layout.Flex{Axis: layout.Vertical}.Layout(gtx, rows...)
 				e.Frame(gtx.Ops)
-
 			}
-
 		}
 	}
 }
-
-// var games = make([]snake.Game, MaxGames)
-
 func learn() {
 	// add initial net
 	initial := createNetWithGame()
@@ -212,9 +198,7 @@ func learn() {
 		if len(results) > (MaxShow * 2) {
 			results = results[:MaxShow*2]
 		}
-
 		n := 0
-
 		best := results[0]
 		log.Printf("starting generation %d finished. best is %d atm with sort %d\n", generation, best.length, best.sort)
 		var wg sync.WaitGroup
@@ -225,12 +209,10 @@ func learn() {
 			}
 			best := results[n]
 			running := createNetWithGame()
-
 			if err := running.net.Load(best.net); err != nil {
 				log.Fatal(err)
 			}
-
-			if i >= 1 { // do not randomize first
+			if i >= 1 { // do not randomize first, maybe it is even better with in another game
 				x := (float64(1) / (MaxGames * 5)) * float64(i)
 				running.net.Randomize(x)
 			}
@@ -261,8 +243,7 @@ func play(r RunningGame) result {
 		panic("could not save net")
 	}
 	return result{
-		net: rawNet,
-		// sort:   (r.game.GetLength() * 1000000) - r.rounds,
+		net:    rawNet,
 		sort:   sort,
 		length: r.game.GetLength(),
 	}
