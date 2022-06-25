@@ -29,9 +29,9 @@ const size = 10
 const maxIdleRounds = size * 4 // no matter where we are, that should be enough to reach every point in an optimal way
 
 type RunningGame struct {
-	net    *neuron.Net
-	game   snake.Game
-	out    []neuron.Neuron
+	net  *neuron.Net
+	game snake.Game
+	out  []neuron.Neuron
 }
 
 func createNetWithGame() RunningGame {
@@ -59,20 +59,28 @@ func createNetWithGame() RunningGame {
 		neuron.NewInput(func() float64 { return float64(game.GetHead().Sub(game.NextFood()).Y) }),
 		neuron.NewInput(func() float64 { return float64(game.GetHead().Sub(game.GetTail()).X) }),
 		neuron.NewInput(func() float64 { return float64(game.GetHead().Sub(game.GetTail()).Y) }),
+
+		neuron.NewInput(func() float64 { head := game.GetHead(); return game.At(head.X-1, head.Y+1) }),
+		neuron.NewInput(func() float64 { head := game.GetHead(); return game.At(head.X-0, head.Y+1) }),
+		neuron.NewInput(func() float64 { head := game.GetHead(); return game.At(head.X+1, head.Y+1) }),
+		neuron.NewInput(func() float64 { head := game.GetHead(); return game.At(head.X-1, head.Y-1) }),
+		neuron.NewInput(func() float64 { head := game.GetHead(); return game.At(head.X-0, head.Y-1) }),
+		neuron.NewInput(func() float64 { head := game.GetHead(); return game.At(head.X+1, head.Y-1) }),
+		neuron.NewInput(func() float64 { head := game.GetHead(); return game.At(head.X+1, head.Y) }),
+		neuron.NewInput(func() float64 { head := game.GetHead(); return game.At(head.X-1, head.Y) }),
 	}
-	input = nil
-	for i := 0; i < size; i++ {
-		for j := 0; j < size; j++ {
-			i := i
-			j := j
-			input = append(input, neuron.NewInput(func() float64 {
-				return game.At(i, j)
-				// img := game.ToImage().At(i, j)
-				// a, b, c, d := img.RGBA()
-				// return float64(a * b * c * d)
-			}))
+	/*
+		input = nil
+		for i := 0; i < size; i++ {
+			for j := 0; j < size; j++ {
+				i := i
+				j := j
+				input = append(input, neuron.NewInput(func() float64 {
+					return game.At(i, j)
+				}))
+			}
 		}
-	}
+	*/
 
 	net, out := neuron.NewNet(input, len(input)*2, len(input)*2, 4)
 	// net, out := neuron.NewNet(input, 4)
