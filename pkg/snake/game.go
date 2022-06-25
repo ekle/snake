@@ -11,13 +11,15 @@ import (
 var _ Game = (*game)(nil)
 
 type game struct {
-	rnd           *rand.Rand
-	size          image.Point
-	snake         []image.Point
-	food          image.Point
-	problem       image.Point
-	lastDirection Direction
-	lost          bool
+	rnd             *rand.Rand
+	size            image.Point
+	snake           []image.Point
+	food            image.Point
+	problem         image.Point
+	lastDirection   Direction
+	lost            bool
+	rounds          int
+	lastActionRound int
 }
 
 var (
@@ -114,13 +116,22 @@ func (g *game) Step(dir Direction) error {
 		}
 	}
 	g.snake = append([]image.Point{try}, g.snake...)
-
+	g.rounds++
 	if try.Eq(g.food) {
+		g.lastActionRound = g.rounds
 		g.placeFood()
 		return nil
 	}
 	g.snake = g.snake[:len(g.snake)-1] // shorten snake
 	return nil
+}
+
+func (g *game) GetLastActionAge() int {
+	return g.rounds - g.lastActionRound
+}
+
+func (g *game) GetRounds() int {
+	return g.rounds
 }
 
 func (g *game) NextFood() image.Point {

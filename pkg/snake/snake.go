@@ -16,6 +16,8 @@ const (
 
 type Game interface {
 	Step(dir Direction) error
+	GetLastActionAge() int
+	GetRounds() int
 	NextFood() image.Point
 	GetHead() image.Point
 	GetNeck() image.Point
